@@ -25,14 +25,14 @@ defmodule ExFix.Parser do
   """
   def parse1(data, dictionary, expected_seqnum \\ nil, validate \\ true)
 
-  def parse1(<<"8=FIXT.1.1", @soh, "9=", rest::binary()>>, dictionary, expected_seqnum, validate) do
+  def parse1(<<"8=FIX.4.2", @soh, "9=", rest::binary()>>, dictionary, expected_seqnum, validate) do
     [str_len, rest1] = :binary.split(rest, <<@soh>>)
     {len, _} = Integer.parse(str_len)
 
     case rest1 do
       <<body::binary-size(len), "10=", checksum::binary-size(3), @soh, other_msgs::binary()>> ->
         orig_msg =
-          <<"8=FIXT.1.1", @soh, "9=", str_len::binary(), @soh, body::binary(), "10=",
+          <<"8=FIX.4.2", @soh, "9=", str_len::binary(), @soh, body::binary(), "10=",
             checksum::binary(), @soh>>
 
         case validate_msg(validate, str_len, body, checksum) do
@@ -51,7 +51,7 @@ defmodule ExFix.Parser do
         end
 
       _ ->
-        orig_msg = <<"8=FIXT.1.1", @soh, "9=", rest::binary()>>
+        orig_msg = <<"8=FIX.4.2", @soh, "9=", rest::binary()>>
 
         %InMessage{
           valid: false,
@@ -316,7 +316,7 @@ defmodule ExFix.Parser do
 
   defp validate_msg(true, str_len, body, checksum) do
     received_checksum = String.to_integer(checksum)
-    payload = <<"8=FIXT.1.1", @soh, "9=", str_len::binary(), @soh, body::binary()>>
+    payload = <<"8=FIX.4.9", @soh, "9=", str_len::binary(), @soh, body::binary()>>
     received_checksum == calc_checksum(payload, 0)
   end
 

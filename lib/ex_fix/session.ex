@@ -84,6 +84,8 @@ defmodule ExFix.Session do
   @field_session_reject_reason "373"
   @field_gap_fill "123"
   @field_new_seq_no "36"
+  @field_refctsm "1131"
+  @field_rawdata "96"
 
   @warning_on_garbled_messages Application.get_env(:ex_fix, :warning_on_garbled_messages)
 
@@ -167,7 +169,8 @@ defmodule ExFix.Session do
       reset_on_logon: reset_on_logon,
       username: username,
       password: password,
-      default_applverid: default_applverid
+      default_applverid: default_applverid,
+      refctsm: 12
     } = config
 
     seqnum = lastseq + 1
@@ -178,7 +181,8 @@ defmodule ExFix.Session do
       {@field_reset_on_logon, reset_on_logon},
       {@field_logon_username, username},
       {@field_logon_password, password},
-      {@field_default_applverid, default_applverid}
+      #  {@field_default_applverid, default_applverid},
+      {@field_refctsm, 12},
     ]
 
     logon_msg = build_message(config, @msg_type_logon, seqnum, fields)
@@ -232,6 +236,8 @@ defmodule ExFix.Session do
         data
       ) do
     expected_seqnum = in_lastseq + 1
+
+        #IO.inspect (:erlang.binary_to_term(data))
 
     msg =
       Parser.parse1(

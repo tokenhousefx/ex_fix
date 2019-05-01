@@ -155,11 +155,8 @@ defmodule ExFix.SessionWorker do
     :ok
   end
 
-  ##
-  ## Private functions
-  ##
-
   defp handle_data(data, %State{session: session, rx_timer: rx_timer} = state) do
+    Logger.info data
     case Session.handle_incoming_data(session, data) do
       {:ok, [], session2} ->
         rx_timer =
@@ -175,28 +172,32 @@ defmodule ExFix.SessionWorker do
         {:noreply, %State{state | session: session2, rx_timer: rx_timer}}
 
       {:ok, msgs_to_send, session2} ->
+        IO.puts "ok"
         send(rx_timer, :msg)
         do_send_messages(msgs_to_send, state)
         {:noreply, %State{state | session: session2}}
 
       {:continue, msgs_to_send, session2} ->
+        IO.puts "continue"
         send(rx_timer, :msg)
         do_send_messages(msgs_to_send, state)
         handle_data("", %State{state | session: session2})
 
       {:resend, msgs_to_send, session2} ->
+        IO.puts "resend"
         send(rx_timer, :msg)
         do_send_messages(msgs_to_send, state, true)
         {:noreply, %State{state | session: session2}}
 
       {:logout, msgs_to_send, session2} ->
+        IO.puts "logout"
         send(rx_timer, :msg)
         do_send_messages(msgs_to_send, state)
         Process.sleep(@logout_timeout)
         %State{transport: transport, client: client} = state
         transport.close(client)
         {:stop, :normal, %State{state | session: session2}}
-    end
+      end
   end
 
   defp do_send_messages(
@@ -236,7 +237,7 @@ defmodule ExFix.SessionWorker do
     port = config.port
     Logger.debug(fn -> "[#{fix_session_name}] Trying to connect to #{host}:#{port}..." end)
     str_host = String.to_charlist(host)
-    options = [mode: :binary] ++ config.transport_options
+    options = [] ++ config.transport_options
 
     case config.transport_mod.connect(str_host, port, options) do
       {:ok, client} ->
